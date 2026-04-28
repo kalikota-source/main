@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Quest: The Lost Kingdom</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #1a1a2e;
+    --sky2: #16213e;
+    --panel: #0f3460;
+    --card: #1a2744;
+    --accent: #e94560;
+    --gold: #ffd700;
+    --mint: #00d4aa;
+    --lavender: #a78bfa;
+    --orange: #fb923c;
+    --text: #e8eaf6;
+    --muted: #8892b0;
+    --correct: #00d4aa;
+    --wrong: #e94560;
+    --radius: 16px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 75%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 50%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 40%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* HEADER */
+  .game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 24px;
+  }
+
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 26px;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.4);
+    letter-spacing: 1px;
+  }
+
+  .logo span { color: var(--mint); }
+
+  .hud {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .hud-pill {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hud-pill .icon { font-size: 16px; }
+
+  /* WORLD MAP / CHAPTER SELECT */
+  #screen-map {
+    animation: fadeUp 0.4s ease;
+  }
+
+  .map-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 6px;
+    color: var(--gold);
+  }
+
+  .map-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 36px;
+  }
+
+  .chapters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .chapter-card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chapter-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .chapter-card.ch1::before { background: linear-gradient(135deg, rgba(0,212,170,0.08), transparent); }
+  .chapter-card.ch2::before { background: linear-gradient(135deg, rgba(167,139,250,0.08), transparent); }
+  .chapter-card.ch3::before { background: linear-gradient(135deg, rgba(251,146,60,0.08), transparent); }
+  .chapter-card.ch4::before { background: linear-gradient(135deg, rgba(233,69,96,0.08), transparent); }
+  .chapter-card.ch5::before { background: linear-gradient(135deg, rgba(255,215,0,0.08), transparent); }
+  .chapter-card.ch6::before { background: linear-gradient(135deg, rgba(0,212,170,0.08), transparent); }
+  .chapter-card.ch7::before { background: linear-gradient(135deg, rgba(167,139,250,0.08), transparent); }
+  .chapter-card.ch8::before { background: linear-gradient(135deg, rgba(251,146,60,0.08), transparent); }
+
+  .chapter-card:hover::before { opacity: 1; }
+  .chapter-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.2); box-shadow: var(--shadow); }
+  .chapter-card.locked { opacity: 0.45; cursor: not-allowed; }
+  .chapter-card.locked:hover { transform: none; }
+
+  .chapter-emoji { font-size: 36px; margin-bottom: 10px; }
+  .chapter-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .tag-mint { color: var(--mint); }
+  .tag-lav { color: var(--lavender); }
+  .tag-orange { color: var(--orange); }
+  .tag-red { color: var(--accent); }
+  .tag-gold { color: var(--gold); }
+
+  .chapter-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .chapter-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .chapter-status {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-size: 18px;
+  }
+
+  /* GAME SCREEN */
+  #screen-game { animation: fadeUp 0.4s ease; display: none; }
+
+  .back-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--muted);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    height: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--mint), var(--lavender));
+    transition: width 0.5s ease;
+  }
+
+  /* Story panel */
+  .story-panel {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .story-avatar {
+    font-size: 40px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .story-bubble {
+    flex: 1;
+  }
+
+  .story-speaker {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--mint);
+    margin-bottom: 4px;
+  }
+
+  .story-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .story-text code {
+    background: rgba(0,212,170,0.15);
+    color: var(--mint);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+  }
+
+  /* Code display */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+    color: #e6edf3;
+  }
+
+  .kw { color: #ff7b72; }      /* keywords */
+  .str { color: #a5d6ff; }     /* strings */
+  .num { color: #79c0ff; }     /* numbers */
+  .fn { color: #d2a8ff; }      /* functions */
+  .cmt { color: #8b949e; }     /* comments */
+  .var { color: #ffa657; }     /* variables */
+  .blank {
+    display: inline-block;
+    background: rgba(255,215,0,0.15);
+    border: 2px dashed var(--gold);
+    border-radius: 4px;
+    min-width: 80px;
+    padding: 0 8px;
+    color: var(--gold);
+    font-style: italic;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .blank.filled {
+    background: rgba(0,212,170,0.15);
+    border-color: var(--mint);
+    color: var(--mint);
+    font-style: normal;
+  }
+
+  /* Question area */
+  .question-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--lavender);
+    margin-bottom: 12px;
+  }
+
+  .question-text {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .choice-btn {
+    background: var(--card);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .choice-btn code {
+    font-family: 'Courier New', monospace;
+    background: rgba(255,255,255,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .choice-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+  }
+
+  .choice-btn.correct {
+    border-color: var(--correct);
+    background: rgba(0,212,170,0.12);
+    color: var(--correct);
+  }
+
+  .choice-btn.wrong {
+    border-color: var(--wrong);
+    background: rgba(233,69,96,0.12);
+    color: var(--wrong);
+  }
+
+  .choice-btn:disabled { cursor: not-allowed; }
+
+  /* Feedback */
+  .feedback-panel {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .feedback-panel.show { display: block; }
+  .feedback-panel.correct-fb { background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3); }
+  .feedback-panel.wrong-fb { background: rgba(233,69,96,0.1); border: 1px solid rgba(233,69,96,0.3); }
+
+  .feedback-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .correct-fb .feedback-title { color: var(--correct); }
+  .wrong-fb .feedback-title { color: var(--wrong); }
+
+  .feedback-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .feedback-text code {
+    background: rgba(255,255,255,0.1);
+    color: var(--lavender);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+  }
+
+  .next-btn {
+    background: linear-gradient(135deg, var(--mint), #00b894);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px;
+    color: #0f3460;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(0,212,170,0.3);
+    display: none;
+  }
+
+  .next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,170,0.4); }
+  .next-btn.show { display: inline-block; }
+
+  /* VICTORY SCREEN */
+  #screen-victory {
+    display: none;
+    text-align: center;
+    animation: fadeUp 0.4s ease;
+    padding: 40px 20px;
+  }
+
+  .victory-emoji { font-size: 80px; margin-bottom: 20px; animation: bounce 1s ease infinite; }
+  .victory-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 40px;
+    color: var(--gold);
+    margin-bottom: 12px;
+    text-shadow: 0 0 30px rgba(255,215,0,0.5);
+  }
+  .victory-sub { font-size: 17px; color: var(--muted); margin-bottom: 30px; }
+
+  .victory-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+
+  .vstat {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    padding: 16px 28px;
+  }
+
+  .vstat-num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 36px;
+    color: var(--gold);
+  }
+
+  .vstat-label { font-size: 13px; color: var(--muted); }
+
+  .concept-badge {
+    display: inline-block;
+    background: rgba(167,139,250,0.15);
+    border: 1px solid rgba(167,139,250,0.3);
+    color: var(--lavender);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    margin: 4px;
+  }
+
+  .play-again-btn {
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    border: none;
+    border-radius: 14px;
+    padding: 16px 40px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(233,69,96,0.4);
+    margin-top: 20px;
+    transition: transform 0.2s;
+  }
+  .play-again-btn:hover { transform: scale(1.04); }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .shake { animation: shake 0.3s ease; }
+
+  /* CONCEPT HINT PILL */
+  .concept-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(167,139,250,0.12);
+    border: 1px solid rgba(167,139,250,0.25);
+    color: var(--lavender);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="game-header">
+    <div class="logo">Code<span>Quest</span> ✨</div>
+    <div class="hud">
+      <div class="hud-pill"><span class="icon">⭐</span> <span id="score-display">0</span></div>
+      <div class="hud-pill"><span class="icon">❤️</span> <span id="lives-display">3</span></div>
+    </div>
+  </div>
+
+  <!-- WORLD MAP -->
+  <div id="screen-map">
+    <div class="map-title">🗺️ The Lost Kingdom</div>
+    <div class="map-sub">Help Pip the Wizard restore the kingdom — one coding spell at a time!</div>
+    <div class="chapters-grid" id="chapters-grid"></div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="screen-game">
+    <button class="back-btn" onclick="goToMap()">← Back to Map</button>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="story-panel" id="story-panel">
+      <div class="story-avatar" id="story-avatar">🧙</div>
+      <div class="story-bubble">
+        <div class="story-speaker" id="story-speaker">Pip the Wizard</div>
+        <div class="story-text" id="story-text"></div>
+      </div>
+    </div>
+    <div id="code-area"></div>
+    <div class="concept-pill" id="concept-pill"></div>
+    <div class="question-label">🧩 Your Challenge</div>
+    <div class="question-text" id="question-text"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback-panel" id="feedback-panel">
+      <div class="feedback-title" id="feedback-title"></div>
+      <div class="feedback-text" id="feedback-text"></div>
+    </div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next →</button>
+  </div>
+
+  <!-- VICTORY -->
+  <div id="screen-victory">
+    <div class="victory-emoji" id="victory-emoji">🎉</div>
+    <div class="victory-title" id="victory-title">Chapter Complete!</div>
+    <div class="victory-sub" id="victory-sub"></div>
+    <div class="victory-stats">
+      <div class="vstat"><div class="vstat-num" id="v-score">0</div><div class="vstat-label">Stars earned</div></div>
+      <div class="vstat"><div class="vstat-num" id="v-correct">0</div><div class="vstat-label">Correct answers</div></div>
+    </div>
+    <div id="concepts-learned"></div>
+    <br>
+    <button class="play-again-btn" onclick="goToMap()">🗺️ Back to Map</button>
+  </div>
+</div>
+
+<script>
+const CHAPTERS = [
+  {
+    id: 1,
+    title: "The Magic Box",
+    emoji: "📦",
+    tag: "Variables",
+    tagClass: "tag-mint",
+    chClass: "ch1",
+    desc: "Pip needs to store magic ingredients in labeled boxes. Learn about variables!",
+    concept: "🧩 Concept: Variables",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "Welcome to my workshop! I need to remember how many <code>magic gems</code> I have. I'll put the number in a labeled box called a <code>variable</code>.",
+        code: `<span class="kw">let</span> <span class="var">gems</span> = <span class="num">5</span>;`,
+        concept: "📦 Variables store information",
+        question: "What is a variable?",
+        choices: [
+          { text: "A labeled box that stores a value", correct: true },
+          { text: "A magic spell that moves things", correct: false },
+          { text: "A type of dragon", correct: false },
+          { text: "A way to draw pictures", correct: false },
+        ],
+        correctMsg: "✨ Exactly! A variable is like a labeled box — it holds a value you can use later.",
+        wrongMsg: "Not quite! A variable is a named container. It stores data like numbers or words so you can use them in your code."
+      },
+      {
+        avatar: "🧚",
+        speaker: "Sparkle the Fairy",
+        story: "Pip told me his <code>gems</code> box has the number 5 inside. But then he found 3 more! He needs to update his box.",
+        code: `<span class="kw">let</span> <span class="var">gems</span> = <span class="num">5</span>;\n<span class="var">gems</span> = <span class="num">8</span>; <span class="cmt">// found 3 more!</span>`,
+        concept: "📦 Variables can change",
+        question: "What does the second line do?",
+        choices: [
+          { text: "Creates a new box called gems", correct: false },
+          { text: "Changes gems to hold the number 8", correct: true },
+          { text: "Deletes the gems box", correct: false },
+          { text: "Prints the number 5", correct: false },
+        ],
+        correctMsg: "⭐ Perfect! The second line updates the gems variable to 8. The old value (5) is replaced!",
+        wrongMsg: "Almost! We don't use 'let' again — that would make a NEW box. Without 'let', we're just changing what's inside the existing gems box."
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "I have different kinds of boxes. Some hold <code>numbers</code>, some hold <code>words</code> (called strings), and some hold <code>true or false</code> (called booleans)!",
+        code: `<span class="kw">let</span> <span class="var">age</span> = <span class="num">10</span>;           <span class="cmt">// number</span>\n<span class="kw">let</span> <span class="var">name</span> = <span class="str">"Pip"</span>;      <span class="cmt">// string</span>\n<span class="kw">let</span> <span class="var">hasWand</span> = <span class="kw">true</span>;  <span class="cmt">// boolean</span>`,
+        concept: "📦 Types of values",
+        question: 'Which variable holds a word (string)?',
+        choices: [
+          { text: '<code>age = 10</code>', correct: false },
+          { text: '<code>name = "Pip"</code>', correct: true },
+          { text: '<code>hasWand = true</code>', correct: false },
+          { text: 'None of them', correct: false },
+        ],
+        correctMsg: '🌟 Great! Strings are words or text, always wrapped in "quotes". That\'s how code knows it\'s a word, not a command!',
+        wrongMsg: 'Look for the quotes! Strings (words/text) are always wrapped in "double quotes" in code.'
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "Pip taught me that I can add two variables together! Like combining potions.",
+        code: `<span class="kw">let</span> <span class="var">redPotions</span> = <span class="num">3</span>;\n<span class="kw">let</span> <span class="var">bluePotions</span> = <span class="num">4</span>;\n<span class="kw">let</span> <span class="var">total</span> = <span class="var">redPotions</span> + <span class="var">bluePotions</span>;`,
+        concept: "📦 Using variables together",
+        question: "What number is stored in the 'total' variable?",
+        choices: [
+          { text: "3", correct: false },
+          { text: "4", correct: false },
+          { text: "7", correct: true },
+          { text: "34", correct: false },
+        ],
+        correctMsg: "🔥 Brilliant! 3 + 4 = 7. The computer adds the values in each variable and stores the result in 'total'.",
+        wrongMsg: "Try adding the numbers! redPotions (3) + bluePotions (4) = total (7). The + sign adds them together."
+      }
+    ]
+  },
+  {
+    id: 2,
+    title: "The Decision Tree",
+    emoji: "🌳",
+    tag: "Conditions (if/else)",
+    tagClass: "tag-lav",
+    chClass: "ch2",
+    desc: "The enchanted tree only lets you pass if you know the right spell. Learn if/else!",
+    concept: "🔀 Concept: If / Else",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "🌳",
+        speaker: "The Enchanted Tree",
+        story: "I only open my gate <code>if</code> you have the password. Otherwise... the gate stays shut!",
+        code: `<span class="kw">if</span> (password === <span class="str">"opensesame"</span>) {\n  <span class="fn">openGate</span>();\n}`,
+        concept: "🔀 If statements check conditions",
+        question: "When does the gate open?",
+        choices: [
+          { text: "Always, no matter what", correct: false },
+          { text: 'Only when password equals "opensesame"', correct: true },
+          { text: "When you knock three times", correct: false },
+          { text: "Never", correct: false },
+        ],
+        correctMsg: '🌟 Yes! The code inside the { } only runs IF the condition (password === "opensesame") is true!',
+        wrongMsg: 'The key word is "if"! The gate only opens IF the password matches "opensesame". The === means "is exactly equal to".'
+      },
+      {
+        avatar: "🌳",
+        speaker: "The Enchanted Tree",
+        story: "I can also tell you what happens when the password is <code>wrong</code>. That's what <code>else</code> is for!",
+        code: `<span class="kw">if</span> (password === <span class="str">"opensesame"</span>) {\n  <span class="fn">openGate</span>();\n} <span class="kw">else</span> {\n  <span class="fn">soundAlarm</span>();\n}`,
+        concept: "🔀 Else handles the other case",
+        question: "What happens when someone gives the WRONG password?",
+        choices: [
+          { text: "The gate opens anyway", correct: false },
+          { text: "Nothing happens", correct: false },
+          { text: "The alarm sounds", correct: true },
+          { text: "The password is changed", correct: false },
+        ],
+        correctMsg: "🔔 Correct! The 'else' block runs when the condition is false — so wrong password = alarm!",
+        wrongMsg: "Look at the 'else' part! When the password is wrong, the condition is false, so the code runs the 'else' block: soundAlarm()."
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "We can check more than one condition using <code>else if</code>. It's like asking different questions one by one.",
+        code: `<span class="kw">if</span> (stars >= <span class="num">10</span>) {\n  <span class="fn">giveGoldTrophy</span>();\n} <span class="kw">else if</span> (stars >= <span class="num">5</span>) {\n  <span class="fn">giveSilverTrophy</span>();\n} <span class="kw">else</span> {\n  <span class="fn">giveRibbon</span>();\n}`,
+        concept: "🔀 Chaining conditions",
+        question: "You earned 7 stars. What do you get?",
+        choices: [
+          { text: "Gold trophy", correct: false },
+          { text: "Silver trophy", correct: true },
+          { text: "Ribbon", correct: false },
+          { text: "Nothing", correct: false },
+        ],
+        correctMsg: "🥈 Spot on! 7 is not >= 10 (so no gold), but 7 IS >= 5, so the silver trophy branch runs!",
+        wrongMsg: "Work through it step by step! 7 >= 10? No. 7 >= 5? Yes! So silver trophy. The computer checks conditions from top to bottom and stops at the first true one."
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "Pip showed me a special trick: I can check if TWO things are true at the same time using <code>&&</code> (AND)!",
+        code: `<span class="kw">let</span> <span class="var">hasKey</span> = <span class="kw">true</span>;\n<span class="kw">let</span> <span class="var">isDay</span> = <span class="kw">true</span>;\n\n<span class="kw">if</span> (hasKey && isDay) {\n  <span class="fn">enterCastle</span>();\n}`,
+        concept: "🔀 AND operator (&&)",
+        question: "When can Ember enter the castle?",
+        choices: [
+          { text: "Only if it's daytime", correct: false },
+          { text: "Only if she has a key", correct: false },
+          { text: "If she has a key AND it's daytime", correct: true },
+          { text: "Whenever she wants", correct: false },
+        ],
+        correctMsg: "🏰 Yes! The && (AND) operator means BOTH must be true. No key OR nighttime = no entry!",
+        wrongMsg: "The && symbol means AND — both sides must be true. So she needs BOTH hasKey to be true AND isDay to be true."
+      }
+    ]
+  },
+  {
+    id: 3,
+    title: "The Enchanted Mill",
+    emoji: "⚙️",
+    tag: "Loops",
+    tagClass: "tag-orange",
+    chClass: "ch3",
+    desc: "The mill grinds grain by repeating the same motion. Learn about loops!",
+    concept: "🔁 Concept: Loops",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "⚙️",
+        speaker: "Miller the Gnome",
+        story: "My mill has to grind 5 bags of grain. Instead of writing the grinding spell 5 times, I use a <code>loop</code> to repeat it!",
+        code: `<span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> <= <span class="num">5</span>; <span class="var">i</span>++) {\n  <span class="fn">grindBag</span>();\n}`,
+        concept: "🔁 Loops repeat code",
+        question: "How many times does grindBag() run?",
+        choices: [
+          { text: "1 time", correct: false },
+          { text: "5 times", correct: true },
+          { text: "0 times", correct: false },
+          { text: "Forever", correct: false },
+        ],
+        correctMsg: "⚙️ Perfect! i starts at 1 and goes up to 5 (i <= 5), running once each time: 1, 2, 3, 4, 5.",
+        wrongMsg: "Count the steps! i starts at 1 and the loop keeps going while i <= 5. That's i = 1, 2, 3, 4, 5 — five times total!"
+      },
+      {
+        avatar: "⚙️",
+        speaker: "Miller the Gnome",
+        story: "The <code>i++</code> at the end of the loop means 'add 1 to i each time'. So i counts up: 1, 2, 3, 4, 5...",
+        code: `<span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> < <span class="num">3</span>; <span class="var">i</span>++) {\n  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Grinding! Step: "</span> + <span class="var">i</span>);\n}`,
+        concept: "🔁 Loop counter variable",
+        question: "What values does 'i' take? (i starts at 0, goes while i < 3)",
+        choices: [
+          { text: "0, 1, 2, 3", correct: false },
+          { text: "1, 2, 3", correct: false },
+          { text: "0, 1, 2", correct: true },
+          { text: "1, 2", correct: false },
+        ],
+        correctMsg: "🌟 Yes! i starts at 0. Then 1, then 2. When i reaches 3, the check (i < 3) is FALSE so the loop stops!",
+        wrongMsg: "Start at 0! i = 0 ✓, i = 1 ✓, i = 2 ✓, i = 3... but wait! 3 < 3 is FALSE, so it stops. Values: 0, 1, 2."
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "There's also a <code>while</code> loop — it keeps going <b>while</b> something is true. Like stirring a potion until it turns purple!",
+        code: `<span class="kw">let</span> <span class="var">color</span> = <span class="str">"green"</span>;\n\n<span class="kw">while</span> (color !== <span class="str">"purple"</span>) {\n  <span class="fn">stirPotion</span>();\n  color = <span class="fn">checkColor</span>();\n}`,
+        concept: "🔁 While loops",
+        question: "When does the while loop STOP?",
+        choices: [
+          { text: 'When color becomes "purple"', correct: true },
+          { text: "After exactly 5 stirs", correct: false },
+          { text: "When you press stop", correct: false },
+          { text: "It never stops", correct: false },
+        ],
+        correctMsg: "🔮 Brilliant! !== means 'not equal to'. The loop stirs WHILE color is NOT purple. The moment it IS purple, the loop ends!",
+        wrongMsg: "Look at the condition: (color !== \"purple\"). !== means 'not equal'. So the loop keeps going while color is NOT purple. It stops the moment color becomes purple!"
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "Loops are great with lists too! I can use a special <code>for...of</code> loop to go through each treasure in my hoard.",
+        code: `<span class="kw">let</span> <span class="var">treasures</span> = [<span class="str">"ruby"</span>, <span class="str">"emerald"</span>, <span class="str">"diamond"</span>];\n\n<span class="kw">for</span> (<span class="kw">let</span> <span class="var">gem</span> <span class="kw">of</span> <span class="var">treasures</span>) {\n  <span class="fn">polish</span>(<span class="var">gem</span>);\n}`,
+        concept: "🔁 Looping through a list",
+        question: "How many times does polish() run, and with which values?",
+        choices: [
+          { text: 'Once, with "ruby"', correct: false },
+          { text: '3 times: "ruby", "emerald", "diamond"', correct: true },
+          { text: 'Twice: "ruby" and "emerald"', correct: false },
+          { text: 'Once with the whole list', correct: false },
+        ],
+        correctMsg: "💎 Amazing! for...of goes through EACH item in the list one by one. 3 gems = 3 times!",
+        wrongMsg: "for...of visits every item! The treasures list has 3 gems, so polish() runs 3 times — once for \"ruby\", once for \"emerald\", once for \"diamond\"."
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: "The Spell Library",
+    emoji: "📚",
+    tag: "Functions",
+    tagClass: "tag-red",
+    chClass: "ch4",
+    desc: "A spell book stores reusable magic. Learn to write and use functions!",
+    concept: "⚡ Concept: Functions",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "📚",
+        speaker: "Librarian Owl",
+        story: "A <code>function</code> is like a reusable spell — you write it once and can cast it as many times as you want!",
+        code: `<span class="kw">function</span> <span class="fn">castFireball</span>() {\n  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"🔥 Fireball launched!"</span>);\n}\n\n<span class="fn">castFireball</span>(); <span class="cmt">// cast it!</span>`,
+        concept: "⚡ Functions are reusable blocks",
+        question: "What does the last line do?",
+        choices: [
+          { text: "Creates the function", correct: false },
+          { text: "Calls (runs) the function", correct: true },
+          { text: "Deletes the function", correct: false },
+          { text: "Nothing", correct: false },
+        ],
+        correctMsg: "🔥 Yes! The 'function' keyword DEFINES the spell. Adding () after the name CALLS it (makes it run)!",
+        wrongMsg: "The function() block is the definition (creating the spell). castFireball() with () at the end is calling (casting) the spell to actually make it run!"
+      },
+      {
+        avatar: "📚",
+        speaker: "Librarian Owl",
+        story: "Functions can take <code>inputs</code> called <b>parameters</b> — like how a fireball spell needs to know HOW BIG to make the fireball!",
+        code: `<span class="kw">function</span> <span class="fn">castFireball</span>(<span class="var">size</span>) {\n  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Fireball size: "</span> + <span class="var">size</span>);\n}\n\n<span class="fn">castFireball</span>(<span class="str">"huge"</span>);\n<span class="fn">castFireball</span>(<span class="str">"tiny"</span>);`,
+        concept: "⚡ Parameters (inputs)",
+        question: 'What does castFireball("tiny") print?',
+        choices: [
+          { text: '"Fireball size: huge"', correct: false },
+          { text: '"Fireball size: tiny"', correct: true },
+          { text: '"tiny"', correct: false },
+          { text: '"castFireball"', correct: false },
+        ],
+        correctMsg: '⚡ Spot on! "tiny" is passed in as the size parameter, so it prints "Fireball size: tiny".',
+        wrongMsg: 'The word inside the () when you call a function is the "argument" — it fills the "size" parameter. So "tiny" goes into size, and we print "Fireball size: tiny".'
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "Functions can also give back a result! We use <code>return</code> to send an answer back.",
+        code: `<span class="kw">function</span> <span class="fn">addGems</span>(<span class="var">a</span>, <span class="var">b</span>) {\n  <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>;\n}\n\n<span class="kw">let</span> <span class="var">total</span> = <span class="fn">addGems</span>(<span class="num">5</span>, <span class="num">3</span>);`,
+        concept: "⚡ Return values",
+        question: "What value is stored in 'total'?",
+        choices: [
+          { text: "5", correct: false },
+          { text: "3", correct: false },
+          { text: "8", correct: true },
+          { text: "addGems", correct: false },
+        ],
+        correctMsg: "💎 Perfect! addGems(5, 3) returns 5 + 3 = 8. That 8 gets stored in 'total'!",
+        wrongMsg: "Trace the steps: addGems is called with a=5 and b=3. Inside, it returns a+b = 5+3 = 8. So total = 8."
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "I wrote my first function! It checks if I have enough fire power to melt a door.",
+        code: `<span class="kw">function</span> <span class="fn">canMeltDoor</span>(<span class="var">firePower</span>) {\n  <span class="kw">if</span> (firePower > <span class="num">50</span>) {\n    <span class="kw">return</span> <span class="kw">true</span>;\n  } <span class="kw">else</span> {\n    <span class="kw">return</span> <span class="kw">false</span>;\n  }\n}`,
+        concept: "⚡ Functions + conditions",
+        question: "What does canMeltDoor(30) return?",
+        choices: [
+          { text: "true", correct: false },
+          { text: "false", correct: true },
+          { text: "30", correct: false },
+          { text: "50", correct: false },
+        ],
+        correctMsg: "🐉 Excellent! 30 > 50 is false, so the else branch runs and returns false. The door is safe!",
+        wrongMsg: "Check the condition: firePower (30) > 50? No! 30 is less than 50, so the if is false, the else runs, and we return false."
+      }
+    ]
+  },
+  {
+    id: 5,
+    title: "The Dragon's Hoard",
+    emoji: "🐉",
+    tag: "Lists & Objects",
+    tagClass: "tag-gold",
+    chClass: "ch5",
+    desc: "Ember organizes her treasure collection. Learn arrays and objects!",
+    concept: "🗂️ Concept: Arrays & Objects",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "Instead of one box per gem, I use a LIST (called an <code>array</code>) to store many gems together!",
+        code: `<span class="kw">let</span> <span class="var">gems</span> = [<span class="str">"ruby"</span>, <span class="str">"emerald"</span>, <span class="str">"sapphire"</span>];\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">gems</span>[<span class="num">0</span>]); <span class="cmt">// first item</span>`,
+        concept: "🗂️ Arrays store lists",
+        question: 'What does gems[0] equal?',
+        choices: [
+          { text: '"emerald"', correct: false },
+          { text: '"ruby"', correct: true },
+          { text: '"sapphire"', correct: false },
+          { text: '0', correct: false },
+        ],
+        correctMsg: '💎 Yes! Arrays start counting at 0, not 1. So [0] is the FIRST item: "ruby".',
+        wrongMsg: 'Remember: arrays start at index 0! gems[0] = "ruby", gems[1] = "emerald", gems[2] = "sapphire".'
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "I can add a new gem to the end of my list using <code>.push()</code>!",
+        code: `<span class="kw">let</span> <span class="var">gems</span> = [<span class="str">"ruby"</span>, <span class="str">"emerald"</span>];\n<span class="var">gems</span>.<span class="fn">push</span>(<span class="str">"diamond"</span>);\n\n<span class="cmt">// gems is now: ["ruby","emerald","diamond"]</span>`,
+        concept: "🗂️ Adding to arrays",
+        question: "How many gems are in the array after push()?",
+        choices: [
+          { text: "1", correct: false },
+          { text: "2", correct: false },
+          { text: "3", correct: true },
+          { text: "4", correct: false },
+        ],
+        correctMsg: "🌟 Correct! We started with 2 gems, pushed 1 more, so now there are 3!",
+        wrongMsg: ".push() ADDS an item to the end. 2 gems + 1 pushed gem = 3 total!"
+      },
+      {
+        avatar: "📚",
+        speaker: "Librarian Owl",
+        story: "An <code>object</code> is like a fact sheet — it stores related information about ONE thing using name/value pairs.",
+        code: `<span class="kw">let</span> <span class="var">dragon</span> = {\n  <span class="var">name</span>: <span class="str">"Ember"</span>,\n  <span class="var">age</span>: <span class="num">12</span>,\n  <span class="var">canFly</span>: <span class="kw">true</span>\n};\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">dragon</span>.<span class="var">name</span>);`,
+        concept: "🗂️ Objects store properties",
+        question: "What does dragon.name print?",
+        choices: [
+          { text: '"Ember"', correct: true },
+          { text: '12', correct: false },
+          { text: 'true', correct: false },
+          { text: '"dragon"', correct: false },
+        ],
+        correctMsg: '🦅 Great! The dot (.) accesses a property. dragon.name looks up the "name" key and returns "Ember".',
+        wrongMsg: 'Use the dot to access properties! dragon.name finds the "name" key in the dragon object, which holds "Ember".'
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "Amazing work, young coder! You've learned all the key spells. Remember: arrays are <code>lists [ ]</code>, objects are <code>fact sheets { }</code>!",
+        code: `<span class="cmt">// Array: ordered list</span>\n<span class="kw">let</span> <span class="var">spells</span> = [<span class="str">"fire"</span>, <span class="str">"ice"</span>, <span class="str">"lightning"</span>];\n\n<span class="cmt">// Object: named properties</span>\n<span class="kw">let</span> <span class="var">wizard</span> = { <span class="var">name</span>: <span class="str">"Pip"</span>, <span class="var">level</span>: <span class="num">99</span> };`,
+        concept: "🗂️ Arrays vs Objects",
+        question: "Which is better for storing a person's name, age, and job?",
+        choices: [
+          { text: "An array [ ]", correct: false },
+          { text: "An object { }", correct: true },
+          { text: "A variable", correct: false },
+          { text: "A loop", correct: false },
+        ],
+        correctMsg: "🏆 Perfect finale! Objects group RELATED properties about one thing. Arrays are for ordered LISTS of similar items.",
+        wrongMsg: "Objects are great for describing one thing with different labels (like a person: name, age, job). Arrays are for collections of similar things in a list!"
+      }
+    ]
+  },
+  {
+    id: 6,
+    title: "The Twin Mirrors",
+    emoji: "🪞",
+    tag: "Booleans",
+    tagClass: "tag-mint",
+    chClass: "ch6",
+    desc: "The palace has two magical mirrors — one shows TRUE, one shows FALSE. Learn booleans!",
+    concept: "✅ Concept: Booleans",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "🪞",
+        speaker: "Mirror of Truth",
+        story: "I only show two answers: <code>true</code> or <code>false</code>. In coding, these are called <b>Booleans</b> — named after mathematician George Boole!",
+        code: `<span class="kw">let</span> <span class="var">isSunny</span> = <span class="kw">true</span>;\n<span class="kw">let</span> <span class="var">isRaining</span> = <span class="kw">false</span>;\n<span class="kw">let</span> <span class="var">hasMagicWand</span> = <span class="kw">true</span>;`,
+        concept: "✅ Booleans are true or false",
+        question: "What kind of value is a Boolean?",
+        choices: [
+          { text: "A number like 42", correct: false },
+          { text: "A word in quotes", correct: false },
+          { text: "Either true or false", correct: true },
+          { text: "A list of items", correct: false },
+        ],
+        correctMsg: "🪞 Exactly! Booleans have only TWO possible values: true or false. They're perfect for yes/no questions!",
+        wrongMsg: "Booleans are the simplest type — they can only be true or false. Think of them like a light switch: on (true) or off (false)!"
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "I can compare two values and get a Boolean result! The <code>===</code> symbol checks if two things are equal.",
+        code: `<span class="kw">let</span> <span class="var">myGems</span> = <span class="num">5</span>;\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">myGems</span> === <span class="num">5</span>);  <span class="cmt">// ?</span>\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">myGems</span> === <span class="num">10</span>); <span class="cmt">// ?</span>`,
+        concept: "✅ Comparison operators",
+        question: "What does myGems === 5 evaluate to?",
+        choices: [
+          { text: "5", correct: false },
+          { text: "true", correct: true },
+          { text: "false", correct: false },
+          { text: "myGems", correct: false },
+        ],
+        correctMsg: "✅ Yes! myGems holds 5, and we're comparing it to 5. 5 === 5 is true!",
+        wrongMsg: "The === operator asks 'are these equal?' myGems is 5, and we compare to 5. They match, so the answer is true!"
+      },
+      {
+        avatar: "🪞",
+        speaker: "Mirror of Truth",
+        story: "The <code>!</code> symbol flips a Boolean — it turns <code>true</code> into <code>false</code> and vice versa. We call it NOT!",
+        code: `<span class="kw">let</span> <span class="var">isAsleep</span> = <span class="kw">false</span>;\n<span class="kw">let</span> <span class="var">isAwake</span> = !<span class="var">isAsleep</span>;\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">isAwake</span>); <span class="cmt">// ?</span>`,
+        concept: "✅ NOT operator (!)",
+        question: "What does isAwake equal?",
+        choices: [
+          { text: "false", correct: false },
+          { text: "true", correct: true },
+          { text: "isAsleep", correct: false },
+          { text: "0", correct: false },
+        ],
+        correctMsg: "🌟 Perfect! isAsleep is false. The ! flips it, so !false = true. Ember is awake!",
+        wrongMsg: "The ! (NOT) operator flips the boolean. isAsleep is false, so !isAsleep is the opposite: true!"
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "I learned about <code>||</code> (OR) — it's true if AT LEAST ONE side is true. Like needing a key OR a password to get in.",
+        code: `<span class="kw">let</span> <span class="var">hasKey</span> = <span class="kw">false</span>;\n<span class="kw">let</span> <span class="var">hasPassword</span> = <span class="kw">true</span>;\n\n<span class="kw">let</span> <span class="var">canEnter</span> = hasKey || hasPassword;`,
+        concept: "✅ OR operator (||)",
+        question: "What is the value of canEnter?",
+        choices: [
+          { text: "false", correct: false },
+          { text: "true", correct: true },
+          { text: "null", correct: false },
+          { text: "undefined", correct: false },
+        ],
+        correctMsg: "🔑 Right! || (OR) is true when at least ONE side is true. hasPassword is true, so canEnter is true!",
+        wrongMsg: "The || (OR) operator only needs ONE side to be true. hasKey is false, BUT hasPassword is true — and one true is enough for OR to be true!"
+      }
+    ]
+  },
+  {
+    id: 7,
+    title: "The Whispering Scrolls",
+    emoji: "📜",
+    tag: "Strings",
+    tagClass: "tag-lav",
+    chClass: "ch7",
+    desc: "The ancient scrolls hold magical words. Learn how to work with text (strings)!",
+    concept: "💬 Concept: Strings",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "📜",
+        speaker: "Scroll Keeper Mira",
+        story: "A <code>string</code> is any text wrapped in quotes. You can join two strings together with <code>+</code> — we call that <b>concatenation</b>!",
+        code: `<span class="kw">let</span> <span class="var">first</span> = <span class="str">"Fire"</span>;\n<span class="kw">let</span> <span class="var">second</span> = <span class="str">"ball"</span>;\n<span class="kw">let</span> <span class="var">spell</span> = <span class="var">first</span> + <span class="var">second</span>;\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">spell</span>); <span class="cmt">// ?</span>`,
+        concept: "💬 Joining strings",
+        question: 'What does spell equal?',
+        choices: [
+          { text: '"Fire ball"', correct: false },
+          { text: '"Fireball"', correct: true },
+          { text: '"Fire" + "ball"', correct: false },
+          { text: 'FireBall', correct: false },
+        ],
+        correctMsg: '🔥 Yes! "Fire" + "ball" = "Fireball". Strings join together with no space unless you add one!',
+        wrongMsg: 'Strings stick together exactly as-is. "Fire" + "ball" = "Fireball" (no gap!). To add a space you\'d need "Fire" + " " + "ball".'
+      },
+      {
+        avatar: "📜",
+        speaker: "Scroll Keeper Mira",
+        story: "Every string has a <code>.length</code> property that tells you how many characters are in it!",
+        code: `<span class="kw">let</span> <span class="var">word</span> = <span class="str">"dragon"</span>;\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">word</span>.<span class="var">length</span>); <span class="cmt">// ?</span>`,
+        concept: "💬 String length",
+        question: 'What is the length of "dragon"?',
+        choices: [
+          { text: "5", correct: false },
+          { text: "6", correct: true },
+          { text: "7", correct: false },
+          { text: "dragon", correct: false },
+        ],
+        correctMsg: "📏 Spot on! d-r-a-g-o-n = 6 letters. .length counts every character including spaces and punctuation!",
+        wrongMsg: "Count the letters: d(1) r(2) a(3) g(4) o(5) n(6). That's 6 characters, so .length is 6!"
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "I can turn a string to ALL CAPS with <code>.toUpperCase()</code> — great for shouting spells!",
+        code: `<span class="kw">let</span> <span class="var">spell</span> = <span class="str">"abracadabra"</span>;\n<span class="kw">let</span> <span class="var">shout</span> = <span class="var">spell</span>.<span class="fn">toUpperCase</span>();\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">shout</span>); <span class="cmt">// ?</span>`,
+        concept: "💬 String methods",
+        question: "What does shout equal?",
+        choices: [
+          { text: '"abracadabra"', correct: false },
+          { text: '"Abracadabra"', correct: false },
+          { text: '"ABRACADABRA"', correct: true },
+          { text: '"abracadabra".toUpperCase()', correct: false },
+        ],
+        correctMsg: "📣 Loud and clear! .toUpperCase() converts every letter to uppercase. Perfect for casting loud spells!",
+        wrongMsg: ".toUpperCase() changes ALL letters to capitals. \"abracadabra\" becomes \"ABRACADABRA\"!"
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "I can check if a string INCLUDES a certain word using <code>.includes()</code>. It gives back true or false!",
+        code: `<span class="kw">let</span> <span class="var">scroll</span> = <span class="str">"The dragon guards the castle"</span>;\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">scroll</span>.<span class="fn">includes</span>(<span class="str">"dragon"</span>)); <span class="cmt">// ?</span>\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">scroll</span>.<span class="fn">includes</span>(<span class="str">"wizard"</span>)); <span class="cmt">// ?</span>`,
+        concept: "💬 Searching strings",
+        question: 'What does scroll.includes("wizard") return?',
+        choices: [
+          { text: "true", correct: false },
+          { text: "false", correct: true },
+          { text: '"wizard"', correct: false },
+          { text: "0", correct: false },
+        ],
+        correctMsg: "🔍 Correct! The scroll says nothing about a wizard, so .includes(\"wizard\") returns false!",
+        wrongMsg: "Look at the string — it mentions \"dragon\" and \"castle\" but not \"wizard\". So .includes(\"wizard\") returns false!"
+      }
+    ]
+  },
+  {
+    id: 8,
+    title: "The Broken Bridge",
+    emoji: "🌉",
+    tag: "Debugging",
+    tagClass: "tag-orange",
+    chClass: "ch8",
+    desc: "Something went wrong with the bridge spell! Learn to find and fix bugs in code.",
+    concept: "🐛 Concept: Debugging",
+    unlocked: true,
+    questions: [
+      {
+        avatar: "🌉",
+        speaker: "Engineer Gnome Bolt",
+        story: "Uh oh! The bridge-building spell has a <b>bug</b> — an error in the code. A bug is any mistake that makes a program behave unexpectedly. Let's find it!",
+        code: `<span class="kw">let</span> <span class="var">planks</span> = <span class="num">10</span>\n<span class="kw">let</span> <span class="var">nails</span> = <span class="num">40</span>;\n<span class="kw">let</span> <span class="var">total</span> = <span class="var">planks</span> + <span class="var">nails</span>;\n\n<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Parts: "</span> + <span class="var">total</span>);`,
+        concept: "🐛 Reading code carefully",
+        question: "Can you spot what's missing on line 1?",
+        choices: [
+          { text: "The number 10 should be 100", correct: false },
+          { text: "A semicolon ; is missing after 10", correct: true },
+          { text: "planks should be in quotes", correct: false },
+          { text: "Nothing is wrong", correct: false },
+        ],
+        correctMsg: "🔍 Sharp eyes! The first line is missing a semicolon (;) at the end. In JavaScript, semicolons end each statement — like a period ends a sentence!",
+        wrongMsg: "Look closely at line 1: 'let planks = 10' — it's missing the semicolon (;) at the end! Compare it to line 2 which has one."
+      },
+      {
+        avatar: "🌉",
+        speaker: "Engineer Gnome Bolt",
+        story: "Here's another broken spell! The wizard tried to greet everyone but something's not right...",
+        code: `<span class="kw">function</span> <span class="fn">greet</span>(<span class="var">name</span>) {\n  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hello, "</span> + <span class="var">Name</span>);\n}\n\n<span class="fn">greet</span>(<span class="str">"Ember"</span>);`,
+        concept: "🐛 Case sensitivity bugs",
+        question: "What's the bug in this code?",
+        choices: [
+          { text: "The function is called greet, should be Greet", correct: false },
+          { text: '"Hello, " should be "Hi, "', correct: false },
+          { text: "Name is capitalized but the parameter is name (lowercase)", correct: true },
+          { text: "Ember should not be in quotes", correct: false },
+        ],
+        correctMsg: "🎯 Great catch! Code is case-sensitive. The parameter is `name` (lowercase) but the code uses `Name` (capital N). They're treated as different things!",
+        wrongMsg: "Code is case-sensitive! The parameter is called `name` (all lowercase), but inside the function it's written as `Name` with a capital N. Those are two different names to a computer!"
+      },
+      {
+        avatar: "🧙",
+        speaker: "Pip the Wizard",
+        story: "Here's a tricky bug — the loop is supposed to print 1, 2, 3, 4, 5 but it goes on FOREVER! This is called an <b>infinite loop</b>.",
+        code: `<span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> <= <span class="num">5</span>; <span class="var">i</span>--) {\n  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">i</span>);\n}`,
+        concept: "🐛 Infinite loop bug",
+        question: "Why does this loop run forever?",
+        choices: [
+          { text: "The loop starts at 1 instead of 0", correct: false },
+          { text: "i-- makes i go DOWN, so it never reaches 5", correct: true },
+          { text: "console.log is spelled wrong", correct: false },
+          { text: "The condition should use <", correct: false },
+        ],
+        correctMsg: "🚨 Exactly! i-- subtracts 1 each time, so i goes 1, 0, -1, -2... it NEVER reaches 5! The fix is i++ to count up.",
+        wrongMsg: "Look at i-- — the double minus means SUBTRACT 1. So i counts down: 1, 0, -1, -2... and the condition i <= 5 is ALWAYS true. It loops forever! Change i-- to i++ to fix it."
+      },
+      {
+        avatar: "🐉",
+        speaker: "Baby Dragon Ember",
+        story: "Last bug! This code should add up all gems, but it gives the wrong answer. Debugging means testing your ideas about what's wrong.",
+        code: `<span class="kw">let</span> <span class="var">total</span> = <span class="str">"0"</span>;\n\n<span class="kw">let</span> <span class="var">gems</span> = [<span class="num">3</span>, <span class="num">5</span>, <span class="num">2</span>];\n<span class="kw">for</span> (<span class="kw">let</span> <span class="var">g</span> <span class="kw">of</span> <span class="var">gems</span>) {\n  <span class="var">total</span> = <span class="var">total</span> + <span class="var">g</span>;\n}\n<span class="cmt">// Expected: 10, Got: "0352"</span>`,
+        concept: "🐛 Wrong type bug (string vs number)",
+        question: "Why does total end up as '0352' instead of 10?",
+        choices: [
+          { text: "The gems list is wrong", correct: false },
+          { text: 'total starts as "0" (a string), so + joins text instead of adding numbers', correct: true },
+          { text: "for...of doesn't work with numbers", correct: false },
+          { text: "You can't use + inside a loop", correct: false },
+        ],
+        correctMsg: '🏆 Master debugger! "0" is a string, not the number 0. When you add a number to a string, JavaScript joins them as text. Fix: let total = 0 (no quotes)!',
+        wrongMsg: 'The sneaky bug is the quotes around "0"! That makes total a string (text), not a number. When you do "0" + 3, JavaScript thinks you\'re joining text: "03". Remove the quotes to make it the number 0!'
+      }
+    ]
+  }
+];
+
+let currentChapter = null;
+let currentQIndex = 0;
+let score = 0;
+let lives = 3;
+let correctCount = 0;
+let chapterProgress = {};
+
+function init() {
+  renderMap();
+}
+
+function renderMap() {
+  const grid = document.getElementById('chapters-grid');
+  grid.innerHTML = '';
+  CHAPTERS.forEach(ch => {
+    const done = chapterProgress[ch.id] === 'done';
+    const card = document.createElement('div');
+    card.className = `chapter-card ${ch.chClass}${ch.unlocked ? '' : ' locked'}`;
+    card.innerHTML = `
+      <div class="chapter-status">${done ? '✅' : ch.unlocked ? '' : '🔒'}</div>
+      <div class="chapter-emoji">${ch.emoji}</div>
+      <div class="chapter-tag ${ch.tagClass}">${ch.tag}</div>
+      <div class="chapter-title">${ch.title}</div>
+      <div class="chapter-desc">${ch.desc}</div>
+    `;
+    if (ch.unlocked) card.onclick = () => startChapter(ch.id);
+    grid.appendChild(card);
+  });
+}
+
+function startChapter(id) {
+  currentChapter = CHAPTERS.find(c => c.id === id);
+  currentQIndex = 0;
+  correctCount = 0;
+  document.getElementById('screen-map').style.display = 'none';
+  document.getElementById('screen-victory').style.display = 'none';
+  document.getElementById('screen-game').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = currentChapter.questions[currentQIndex];
+  const total = currentChapter.questions.length;
+
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('lives-display').textContent = lives;
+  document.getElementById('progress-fill').style.width = (currentQIndex / total * 100) + '%';
+
+  document.getElementById('story-avatar').textContent = q.avatar;
+  document.getElementById('story-speaker').textContent = q.speaker;
+  document.getElementById('story-text').innerHTML = q.story;
+
+  document.getElementById('code-area').innerHTML = q.code
+    ? `<div class="code-block">${q.code}</div>` : '';
+
+  document.getElementById('concept-pill').textContent = q.concept;
+  document.getElementById('question-text').textContent = q.question;
+
+  const choices = document.getElementById('choices');
+  choices.innerHTML = '';
+  const shuffled = [...q.choices].sort(() => Math.random() - 0.5);
+  shuffled.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = c.text;
+    btn.onclick = () => handleAnswer(c.correct, btn, q);
+    choices.appendChild(btn);
+  });
+
+  const fb = document.getElementById('feedback-panel');
+  fb.className = 'feedback-panel';
+  document.getElementById('next-btn').className = 'next-btn';
+}
+
+function handleAnswer(isCorrect, btn, q) {
+  const buttons = document.querySelectorAll('.choice-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  const fb = document.getElementById('feedback-panel');
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    fb.className = 'feedback-panel correct-fb show';
+    document.getElementById('feedback-title').textContent = '✨ Correct!';
+    document.getElementById('feedback-text').innerHTML = q.correctMsg;
+    score += 10;
+    correctCount++;
+    document.getElementById('score-display').textContent = score;
+  } else {
+    btn.classList.add('wrong');
+    btn.parentElement.classList.add('shake');
+    setTimeout(() => btn.parentElement.classList.remove('shake'), 300);
+    // Show correct answer
+    buttons.forEach(b => {
+      if (b.innerHTML.replace(/<[^>]*>/g, '').trim() !== btn.innerHTML.replace(/<[^>]*>/g, '').trim()) {
+        // find the correct one by re-checking
+      }
+    });
+    fb.className = 'feedback-panel wrong-fb show';
+    document.getElementById('feedback-title').textContent = '🤔 Not quite...';
+    document.getElementById('feedback-text').innerHTML = q.wrongMsg;
+    lives = Math.max(0, lives - 1);
+    document.getElementById('lives-display').textContent = lives;
+  }
+
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+function nextQuestion() {
+  currentQIndex++;
+  if (currentQIndex >= currentChapter.questions.length) {
+    showVictory();
+  } else {
+    renderQuestion();
+    document.getElementById('screen-game').scrollTop = 0;
+  }
+}
+
+function showVictory() {
+  chapterProgress[currentChapter.id] = 'done';
+  document.getElementById('screen-game').style.display = 'none';
+  const vs = document.getElementById('screen-victory');
+  vs.style.display = 'block';
+
+  const pct = Math.round(correctCount / currentChapter.questions.length * 100);
+
+  document.getElementById('victory-emoji').textContent = pct === 100 ? '🏆' : pct >= 75 ? '🌟' : '⭐';
+  document.getElementById('victory-title').textContent = pct === 100 ? 'Flawless Victory!' : 'Chapter Complete!';
+  document.getElementById('victory-sub').textContent =
+    `You completed "${currentChapter.title}" — ${pct}% correct!`;
+  document.getElementById('v-score').textContent = score;
+  document.getElementById('v-correct').textContent = `${correctCount}/${currentChapter.questions.length}`;
+
+  document.getElementById('concepts-learned').innerHTML =
+    `<div style="margin-top:8px; font-size:14px; color:var(--muted); margin-bottom:12px;">Concepts you practiced:</div>
+    <div><span class="concept-badge">${currentChapter.concept}</span></div>`;
+}
+
+function goToMap() {
+  document.getElementById('screen-game').style.display = 'none';
+  document.getElementById('screen-victory').style.display = 'none';
+  document.getElementById('screen-map').style.display = 'block';
+  renderMap();
+  window.scrollTo(0, 0);
+}
+
+init();
+</script>
+</body>
+</html>
