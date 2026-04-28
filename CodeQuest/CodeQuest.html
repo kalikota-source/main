@@ -546,10 +546,13 @@
     <div class="map-title">🗺️ The Lost Kingdom</div>
     <div class="map-sub">Help Pip the Wizard restore the kingdom — one coding spell at a time!</div>
     <div class="chapters-grid" id="chapters-grid"></div>
+    <div style="text-align:center; margin-top:28px;">
+      <button onclick="showCertScreen()" style="background:none; border:1px solid rgba(255,215,0,0.3); border-radius:20px; padding:8px 20px; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; color:rgba(255,215,0,0.6); cursor:pointer;" title="Preview certificate without completing all chapters">🏆 Preview Certificate</button>
+    </div>
   </div>
 
   <!-- GAME SCREEN -->
-  <div id="screen-game">
+  <div id="screen-game" style="display:none;">
     <button class="back-btn" onclick="goToMap()">← Back to Map</button>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
@@ -584,7 +587,7 @@
       <label style="display:block; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--lavender); margin-bottom:10px;">Enter your name for the certificate</label>
       <input id="cert-name-input" type="text" placeholder="e.g. Alex the Wizard" maxlength="40"
         style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:var(--text); font-family:'Nunito',sans-serif; font-size:16px; outline:none; margin-bottom:16px;"
-        oninput="updateCertPreview()" />
+        />
       <div style="display:flex; gap:12px; flex-wrap:wrap;">
         <button onclick="showCertificate()" style="flex:1; background:linear-gradient(135deg,var(--gold),#e6b800); border:none; border-radius:12px; padding:14px 20px; font-family:'Fredoka One',cursive; font-size:18px; color:#1a1a2e; cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">✨ Generate Certificate</button>
         <button onclick="goToMap()" style="background:none; border:1.5px solid rgba(255,255,255,0.15); border-radius:12px; padding:14px 20px; font-family:'Fredoka One',cursive; font-size:16px; color:var(--muted); cursor:pointer;">← Back to Map</button>
@@ -606,7 +609,7 @@
   </div>
 
   <!-- VICTORY -->
-  <div id="screen-victory">
+  <div id="screen-victory" style="display:none; text-align:center; padding:40px 20px; animation:fadeUp 0.4s ease;">
     <div class="victory-emoji" id="victory-emoji">🎉</div>
     <div class="victory-title" id="victory-title">Chapter Complete!</div>
     <div class="victory-sub" id="victory-sub"></div>
@@ -1360,17 +1363,18 @@ function nextQuestion() {
 
 function showVictory() {
   chapterProgress[currentChapter.id] = 'done';
+  const allDone = CHAPTERS.every(c => chapterProgress[c.id] === 'done');
+
   document.getElementById('screen-game').style.display = 'none';
   const vs = document.getElementById('screen-victory');
-  vs.style.display = 'block';
+  vs.style.cssText = 'display:block; text-align:center; padding:40px 20px;';
 
   const pct = Math.round(correctCount / currentChapter.questions.length * 100);
-  const allDone = CHAPTERS.every(c => chapterProgress[c.id] === 'done');
 
   document.getElementById('victory-emoji').textContent = pct === 100 ? '🏆' : pct >= 75 ? '🌟' : '⭐';
   document.getElementById('victory-title').textContent = allDone ? '🎓 All Chapters Complete!' : pct === 100 ? 'Flawless Victory!' : 'Chapter Complete!';
   document.getElementById('victory-sub').textContent = allDone
-    ? 'You\'ve mastered every coding concept in the kingdom!'
+    ? "You've mastered every coding concept in the kingdom!"
     : `You completed "${currentChapter.title}" — ${pct}% correct!`;
   document.getElementById('v-score').textContent = score;
   document.getElementById('v-correct').textContent = `${correctCount}/${currentChapter.questions.length}`;
@@ -1378,11 +1382,15 @@ function showVictory() {
   document.getElementById('concepts-learned').innerHTML =
     `<div style="margin-top:8px; font-size:14px; color:var(--muted); margin-bottom:12px;">Concepts you practiced:</div>
     <div><span class="concept-badge">${currentChapter.concept}</span></div>
-    ${allDone ? `<div style="margin-top:20px;"><button onclick="showCertScreen()" style="background:linear-gradient(135deg,var(--gold),#e6b800);border:none;border-radius:14px;padding:16px 36px;font-family:'Fredoka One',cursive;font-size:22px;color:#1a1a2e;cursor:pointer;box-shadow:0 6px 20px rgba(255,215,0,0.4);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">🏆 Claim Your Certificate!</button></div>` : ''}`;
+    ${allDone ? `<div style="margin-top:24px;"><button onclick="showCertScreen()" style="background:linear-gradient(135deg,var(--gold),#e6b800);border:none;border-radius:14px;padding:16px 36px;font-family:'Fredoka One',cursive;font-size:22px;color:#1a1a2e;cursor:pointer;box-shadow:0 6px 20px rgba(255,215,0,0.4);">🏆 Claim Your Certificate!</button></div>` : ''}`;
+  window.scrollTo(0, 0);
 }
 
 function showCertScreen() {
-  document.getElementById('screen-victory').style.display = 'none';
+  document.getElementById('screen-map').style.display = 'none';
+  document.getElementById('screen-victory').style.cssText = 'display:none';
+  document.getElementById('screen-game').style.display = 'none';
+  document.getElementById('screen-cert-display').style.display = 'none';
   document.getElementById('screen-certificate').style.display = 'block';
   window.scrollTo(0, 0);
 }
@@ -1489,19 +1497,31 @@ function showCertificate() {
 function printCert() {
   const svgEl = document.querySelector('#cert-container svg');
   if (!svgEl) return;
-  const svgData = new XMLSerializer().serializeToString(svgEl);
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>Code Quest Certificate</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#0f0c29; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
-    svg { max-width:780px; width:100%; height:auto; display:block; }
+
+  const style = document.createElement('style');
+  style.id = 'print-cert-style';
+  style.textContent = `
     @media print {
-      body { background:white; padding:0; }
-      svg { width:100%; max-width:none; }
+      body > * { display: none !important; }
+      #print-cert-overlay { display: flex !important; }
     }
-  </style></head><body>${svgData}<script>window.onload=()=>window.print()<\/script></body></html>`);
-  win.document.close();
+  `;
+  document.head.appendChild(style);
+
+  let overlay = document.getElementById('print-cert-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'print-cert-overlay';
+    overlay.style.cssText = 'display:none; position:fixed; inset:0; background:white; z-index:9999; align-items:center; justify-content:center; padding:20px;';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = svgEl.outerHTML;
+  window.print();
+  setTimeout(() => {
+    overlay.innerHTML = '';
+    const s = document.getElementById('print-cert-style');
+    if (s) s.remove();
+  }, 1000);
 }
 
 function goToMap() {
